@@ -15,7 +15,7 @@ resource "azurerm_subnet" "subnet" {
 name                 = var.subnetname
 resource_group_name  = var.rgname
 virtual_network_name = azurerm_vitual_network.vnet.name
-address_prefix       = var.subnet_prefix
+address_prefixes     = var.subnet_prefix
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
