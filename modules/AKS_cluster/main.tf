@@ -1,6 +1,3 @@
-provider "azurerm" {
-   features {}
-}
 
 resource "azurerm_resource_group" "tf-rg" {
 name     = var.rgname
@@ -20,4 +17,50 @@ resource_group_name  = var.rgname
 virtual_network_name = azurerm_vitual_network.vnet.name
 address_prefix       = var.subnet_prefix
 }
+
+resource "azurerm_kubernetes_cluster" "aks" {
+name                = var.aksname
+resource_group_name = var.rgname
+dns_prefix          = var.aksname
+kubernetes_version  = 1.31.0
+
+default_node_pool {
+  name       = "nodepool"
+  vm_size    = "Standard_DS2_v2"
+  node_count = 2
+ }
+
+identity {
+  type = "SystemAssigned"
+}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
