@@ -25,13 +25,18 @@ dns_prefix          = var.aksname
 kubernetes_version  = 1.31.0
 
 default_node_pool {
-  name       = "nodepool"
-  vm_size    = "Standard_DS2_v2"
-  node_count = 2
+  name           = "nodepool"
+  vm_size        = "Standard_DS2_v2"
+  node_count     = 2
+  vnet_subnet_id = azurerm_subnet.subnet.id
  }
 
 identity {
   type = "SystemAssigned"
+}
+
+network_profile {
+  network_plugin = "azure"
 }
 }
 
