@@ -1,5 +1,5 @@
 rgname      = "aks-rg"
-location    = "Central India"
+location    = "South India"
 vnetname    = "vnet1"
 subnetname  = "subnet1"
 addr_space  = ["10.0.0.0/8"]

@@ -1,0 +1,180 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger: none
+
+stages:
+  - stage: Build
+    jobs:
+    - job: BuildJob
+      pool:
+        vmImage: 'ubuntu-latest'
+      steps:
+      - task: TerraformInstaller@1
+        displayName: Install Terraform
+        inputs:
+          terraformVersion: 'latest'
+
+      - task: TerraformTask@5
+        displayName: tf init
+        inputs:
+          provider: 'azurerm'
+          command: 'init'
+          backendAzureRmUseEntraIdForAuthentication: false
+          backendServiceArm: 'Terraform with AKS'
+          backendAzureRmResourceGroupName: 'demo-rg'
+          backendAzureRmStorageAccountName: 'terraformdemowithaks'
+          backendAzureRmContainerName: 'prod-tfstate'
+          backendAzureRmKey: 'prod.terraform.tfstate'
+      - task: TerraformTask@5
+        displayName: tf validate
+        inputs:
+          provider: 'azurerm'
+          command: 'validate'
+          
+      - task: TerraformTask@5
+        displayName: tf fmt
+        inputs:
+          provider: 'azurerm'
+          command: 'custom'
+          outputTo: 'console'
+          customCommand: 'fmt'
+          environmentServiceNameAzureRM: 'Terraform with AKS'
+
+      - task: TerraformTask@5
+        displayName: tf plan
+        inputs:
+          provider: 'azurerm'
+          command: 'plan'
+          commandOptions: '-out "$(Build.SourcesDirectory)/tfplanfile.txt"'
+          environmentServiceNameAzureRM: 'Terraform with AKS'
+
+      - task: ArchiveFiles@2
+        displayName: archive files
+        inputs:
+          rootFolderOrFile: '$(Build.SourcesDirectory)'
+          includeRootFolder: true
+          archiveType: 'zip'
+          archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+          replaceExistingArchive: true
+
+      - task: PublishBuildArtifacts@1
+        displayName: publish artifacts
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: '$(Build.BuildId)-build'
+          publishLocation: 'Container'
+
+
+  - stage: Deploy
+    displayName: Deploy Stage
+    condition: succeeded()
+    jobs:
+    - deployment: DeployJob 
+      displayName: Deploy with Approval
+      environment: deploy  
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: TerraformInstaller@1
+              displayName: Install Terraform
+              inputs:
+                terraformVersion: 'latest'
+
+            - task: DownloadBuildArtifacts@1
+              displayName: Download Build Artifacts
+              inputs:
+                buildType: 'current'
+                downloadType: 'single'
+                artifactName: '$(Build.BuildId)-build'
+                downloadPath: '$(Build.ArtifactStagingDirectory)'
+
+            - task: ExtractFiles@1
+              displayName: Extract Files
+              inputs:
+                archiveFilePatterns: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)-build/$(Build.BuildId).zip'
+                destinationFolder: '$(System.DefaultWorkingDirectory)/'
+                cleanDestinationFolder: true
+                overwriteExistingFiles: false
+
+            - task: TerraformTask@5
+              displayName: tf init - deploy stage
+              inputs:
+                provider: 'azurerm'
+                command: 'init'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/s'
+                backendAzureRmUseEntraIdForAuthentication: false
+                backendServiceArm: 'Terraform with AKS'
+                backendAzureRmResourceGroupName: 'demo-rg'
+                backendAzureRmStorageAccountName: 'terraformdemowithaks'
+                backendAzureRmContainerName: 'prod-tfstate'
+                backendAzureRmKey: 'prod.terraform.tfstate'
+
+            - task: TerraformTask@5
+              displayName: tf apply
+              inputs:
+                provider: 'azurerm'
+                command: 'apply'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/s'
+                commandOptions: '--auto-approve'
+                environmentServiceNameAzureRM: 'Terraform with AKS'           
+
+
+
+
+  - stage: Destroy
+    displayName: Destroy Stage
+    condition: succeeded()
+    jobs:
+    - deployment: DestroyJob 
+      displayName: Destroy with Approval
+      environment: destroy  
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+            - task: TerraformInstaller@1
+              displayName: Install Terraform
+              inputs:
+                terraformVersion: 'latest'
+
+            - task: DownloadBuildArtifacts@1
+              displayName: Download Build Artifacts
+              inputs:
+                buildType: 'current'
+                downloadType: 'single'
+                artifactName: '$(Build.BuildId)-build'
+                downloadPath: '$(Build.ArtifactStagingDirectory)'
+
+            - task: ExtractFiles@1
+              displayName: Extract Files
+              inputs:
+                archiveFilePatterns: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId)-build/$(Build.BuildId).zip'
+                destinationFolder: '$(System.DefaultWorkingDirectory)/'
+                cleanDestinationFolder: true
+                overwriteExistingFiles: false
+
+            - task: TerraformTask@5
+              displayName: tf init - deploy stage
+              inputs:
+                provider: 'azurerm'
+                command: 'init'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/s'
+                backendAzureRmUseEntraIdForAuthentication: false
+                backendServiceArm: 'Terraform with AKS'
+                backendAzureRmResourceGroupName: 'demo-rg'
+                backendAzureRmStorageAccountName: 'terraformdemowithaks'
+                backendAzureRmContainerName: 'prod-tfstate'
+                backendAzureRmKey: 'prod.terraform.tfstate'
+
+            - task: TerraformTask@5
+              displayName: tf destroy
+              inputs:
+                provider: 'azurerm'
+                command: 'destroy'
+                workingDirectory: '$(System.DefaultWorkingDirectory)/s'
+                commandOptions: '--auto-approve'
+                environmentServiceNameAzureRM: 'Terraform with AKS'           
