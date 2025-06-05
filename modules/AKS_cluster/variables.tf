@@ -1,27 +1,27 @@
 variable "rgname" {
-type = string
+  type = string
 }
 
 variable "location" {
-type = string
+  type = string
 }
 
 variable "vnetname" {
-type = string
+  type = string
 }
 
 variable "subnetname" {
-type = string
+  type = string
 }
 
 variable "addr_space" {
-type = list
+  type = list(string)
 }
 
-variable "subnet_prefix" {
-type = list
+variable "addr_prefix" {
+  type = list(string)
 }
 
 variable "aksname" {
-type = string
+  type = string
 }
