@@ -25,3 +25,15 @@ Before using this deployment pipeline, ensure the following are set up:
 - State Storage: Remote state storage ensures safe state locking and collaboration.
 - Role-Based Access Control (RBAC): Ensure least privilege access for Service Principal used by the pipeline.
 
+
+
+
+
+![Image](https://github.com/user-attachments/assets/88425430-596a-406b-9d66-aa5f63d59000)
+
+
+![Image](https://github.com/user-attachments/assets/7ef39be8-eb47-4889-8a7c-8980be2befc0)
+
+
+![Image](https://github.com/user-attachments/assets/0ad4a945-0f0f-42d5-b8cc-bd9898c9c1fe)
+
